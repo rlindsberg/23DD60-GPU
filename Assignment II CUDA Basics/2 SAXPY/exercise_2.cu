@@ -19,14 +19,14 @@ __global__ void distanceKernel(float *d_out, float *d_x, float *d_y)
 
 int main()
 {
-
     // Declare a pointer for an array of floats
     float *d_out = 0;
+    float *d_x = 0;
+    float *d_y = 0;
+
     // Allocate device memory to store the output array
     cudaMalloc(&d_out, 20*sizeof(float));
-    float *d_x = 0;
     cudaMalloc(&d_x, 20*sizeof(float));
-    float *d_y = 0;
     cudaMalloc(&d_y, 20*sizeof(float));
 
     float *x = (float*) malloc(20*sizeof(float)); for(int i=0; i < 20; i++) x[i] = 100.0;
