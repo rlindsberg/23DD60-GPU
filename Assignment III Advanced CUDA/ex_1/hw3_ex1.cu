@@ -179,6 +179,14 @@ __global__ void gpu_grayscale(int width, int height, float *image, float *image_
     // TO-DO #4.2 /////////////////////////////////////////////
     // Implement the GPU version of the grayscale conversion //
     ///////////////////////////////////////////////////////////
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    int index = y * width + x; // y = 1 is responsible for the first row
+    int pixel_index = index * 3; // 3 lights = 1 pixel
+
+    image_out[index] = image[pixel_index] * 0.0722f + // B
+                       image[pixel_index+1] * 0.7152f + // G
+                       image[pixel_index+2] * 0.2126f;  // R
 }
 
 /**
@@ -352,11 +360,11 @@ int main(int argc, char **argv)
 
         // Launch the GPU version
         gettimeofday(&t[0], NULL);
-        // gpu_grayscale<<<grid, block>>>(bitmap.width, bitmap.height,
-        //                                d_bitmap, d_image_out[0]);
+        gpu_grayscale<<<grid, block>>>(bitmap.width, bitmap.height,
+                                       d_bitmap, d_image_out[0]);
 
-        // cudaMemcpy(image_out[0], d_image_out[0],
-        //            image_size * sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(image_out[0], d_image_out[0],
+                   image_size * sizeof(float), cudaMemcpyDeviceToHost);
         gettimeofday(&t[1], NULL);
 
         elapsed[1] = get_elapsed(t[0], t[1]);
