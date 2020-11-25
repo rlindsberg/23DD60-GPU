@@ -5,6 +5,7 @@
 
 #define BLOCK_SIZE  16
 #define HEADER_SIZE 138
+#define BLOCK_SIZE_SH 18
 
 typedef unsigned char BYTE;
 
@@ -265,6 +266,8 @@ void cpu_gaussian(int width, int height, float *image, float *image_out)
  */
 __global__ void gpu_gaussian(int width, int height, float *image, float *image_out)
 {
+    __shared__ float sh_block[BLOCK_SIZE_SH * BLOCK_SIZE_SH];
+
     float gaussian[9] = { 1.0f / 16.0f, 2.0f / 16.0f, 1.0f / 16.0f,
                           2.0f / 16.0f, 4.0f / 16.0f, 2.0f / 16.0f,
                           1.0f / 16.0f, 2.0f / 16.0f, 1.0f / 16.0f };
@@ -277,8 +280,13 @@ __global__ void gpu_gaussian(int width, int height, float *image, float *image_o
         int offset_t = index_y * width + index_x;
         int offset   = (index_y + 1) * width + (index_x + 1);
 
-        image_out[offset] = gpu_applyFilter(&image[offset_t],
-                                            width, gaussian, 3);
+        // use sh_id to index the shared memory
+        int sh_id = threadIdx.y * BLOCK_SIZE_SH + threadIdx.x;
+        sh_block[sh_id] = image[index_y * width + index_x];
+        __syncthreads();
+
+        image_out[offset] = gpu_applyFilter(&sh_block[sh_id],
+                                            BLOCK_SIZE_SH, gaussian, 3);
     }
 }
 
@@ -320,6 +328,8 @@ __global__ void gpu_sobel(int width, int height, float *image, float *image_out)
     // TO-DO #6.1 /////////////////////////////////////
     // Implement the GPU version of the Sobel filter //
     ///////////////////////////////////////////////////
+    __shared__ float sh_block[BLOCK_SIZE_SH * BLOCK_SIZE_SH];
+
     float sobel_x[9] = { 1.0f,  0.0f, -1.0f,
                          2.0f,  0.0f, -2.0f,
                          1.0f,  0.0f, -1.0f };
@@ -334,9 +344,14 @@ __global__ void gpu_sobel(int width, int height, float *image, float *image_out)
     {
         int offset_t = index_y * width + index_x;
         int offset   = (index_y + 1) * width + (index_x + 1);
+        
+        // use sh_id to index the shared memory
+        int sh_id = threadIdx.y * BLOCK_SIZE_SH + threadIdx.x;
+        sh_block[sh_id] = image[index_y * width + index_x];
+        __syncthreads();
 
-        float gx = gpu_applyFilter(&image[offset_t], width, sobel_x, 3);
-        float gy = gpu_applyFilter(&image[offset_t], width, sobel_y, 3);
+        float gx = gpu_applyFilter(&image[offset_t], BLOCK_SIZE_SH, sobel_x, 3);
+        float gy = gpu_applyFilter(&image[offset_t], BLOCK_SIZE_SH, sobel_y, 3);
 
         image_out[offset] = sqrtf(gx * gx + gy * gy);
     }
