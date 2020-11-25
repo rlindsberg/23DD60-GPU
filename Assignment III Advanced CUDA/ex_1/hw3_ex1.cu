@@ -344,14 +344,14 @@ __global__ void gpu_sobel(int width, int height, float *image, float *image_out)
     {
         int offset_t = index_y * width + index_x;
         int offset   = (index_y + 1) * width + (index_x + 1);
-        
+
         // use sh_id to index the shared memory
         int sh_id = threadIdx.y * BLOCK_SIZE_SH + threadIdx.x;
         sh_block[sh_id] = image[index_y * width + index_x];
         __syncthreads();
 
-        float gx = gpu_applyFilter(&image[offset_t], BLOCK_SIZE_SH, sobel_x, 3);
-        float gy = gpu_applyFilter(&image[offset_t], BLOCK_SIZE_SH, sobel_y, 3);
+        float gx = gpu_applyFilter(&sh_block[sh_id], BLOCK_SIZE_SH, sobel_x, 3);
+        float gy = gpu_applyFilter(&sh_block[sh_id], BLOCK_SIZE_SH, sobel_y, 3);
 
         image_out[offset] = sqrtf(gx * gx + gy * gy);
     }
@@ -426,7 +426,7 @@ int main(int argc, char **argv)
     {
         // Launch the CPU version
         gettimeofday(&t[0], NULL);
-        //cpu_gaussian(bitmap.width, bitmap.height, image_out[0], image_out[1]);
+        cpu_gaussian(bitmap.width, bitmap.height, image_out[0], image_out[1]);
         gettimeofday(&t[1], NULL);
 
         elapsed[0] = get_elapsed(t[0], t[1]);
@@ -450,7 +450,7 @@ int main(int argc, char **argv)
     {
         // Launch the CPU version
         gettimeofday(&t[0], NULL);
-        //cpu_sobel(bitmap.width, bitmap.height, image_out[1], image_out[0]);
+        cpu_sobel(bitmap.width, bitmap.height, image_out[1], image_out[0]);
         gettimeofday(&t[1], NULL);
 
         elapsed[0] = get_elapsed(t[0], t[1]);
