@@ -19,7 +19,8 @@ const char *hello_world =
 "{                                          \n"
 "    int x = get_global_id(0);          \n"
 "    int y = get_global_id(1);          \n"
-"    printf(\"Hello World! My threadId is (%d, %d)\\n\", x, y);        \n"
+"    int work_group_id = get_group_id(0);          \n"
+"    printf(\"Hello World! My threadId is (%d, %d, %d)\\n\", x, y, work_group_id);        \n"
 "}                                          \n";
 
 int main(int argc, char *argv) {
@@ -64,10 +65,10 @@ int main(int argc, char *argv) {
   n_workitem[0] = 16;
   n_workitem[1] = 16;
 
-  // create workgroup(0,0)
+  // create workgroup(0,0),...(3,3)
   size_t workgroup_size[2];
-  workgroup_size[0] = 1;
-  workgroup_size[1] = 1;
+  workgroup_size[0] = 4;
+  workgroup_size[1] = 4;
 
 
   /* Launch the kernel */
