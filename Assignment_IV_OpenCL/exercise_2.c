@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <CL/cl.h>
 
-#define VSIZE 1024
+#define VSIZE 10000
 
 #define CHK_ERROR(err) if (err != CL_SUCCESS) fprintf(stderr,"Error: %s\n",clGetErrorString(err));
 
@@ -102,9 +102,9 @@ const char* clGetErrorString(int errorCode) {
   }
 }
 
-const char *vadd_program =
+const char *saxpy_arr =
 "__kernel                                   \n"
-"void vadd    (  __global float *A,         \n"
+"void saxpy    (  __global float *A,         \n"
 "                __global float *B,         \n"
 "                __global float *C)         \n"
 "{                                          \n"
@@ -145,7 +145,7 @@ int main(int argc, char *argv) {
   err = clEnqueueWriteBuffer(cmd_queue, B_dev, CL_TRUE, 0, array_size, B, 0, NULL, NULL);CHK_ERROR(err);
 
   /* Create the OpenCL program */
-  cl_program program = clCreateProgramWithSource(context, 1,(const char **)&vadd_program, NULL, &err);CHK_ERROR(err);
+  cl_program program = clCreateProgramWithSource(context, 1,(const char **)&saxpy_arr, NULL, &err);CHK_ERROR(err);
 
   /* Build code within and report any errors */
   err = clBuildProgram(program, 1, device_list, NULL, NULL, NULL);
@@ -155,8 +155,8 @@ int main(int argc, char *argv) {
     clGetProgramBuildInfo(program, device_list[0], CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
     fprintf(stderr,"Build error: %s\n", buffer); exit(0);}
 
-  /* Create a kernel object referncing our "vadd" kernel */
-  cl_kernel kernel = clCreateKernel(program, "vadd", &err);CHK_ERROR(err);
+  /* Create a kernel object referncing our "saxpy" kernel */
+  cl_kernel kernel = clCreateKernel(program, "saxpy", &err);CHK_ERROR(err);
 
   /* Set the three kernel arguments */
   err = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *) &A_dev);CHK_ERROR(err);
@@ -164,12 +164,17 @@ int main(int argc, char *argv) {
   err = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *) &C_dev);CHK_ERROR(err);
 
   /* VSIZE work-items and one work-group */
-  size_t n_workitem[1] = {VSIZE};
-  size_t workgroup_size[1] = {1};
+  // thread block size of 256 threads
+  const int TS = 256;
+  // grid size, take floor then plus 1
+  const int GS = {256 * ((size_t)VSIZE / 256 + 1)};
+
+  const size_t local[1] = { TS };
+  const size_t global[1] = { GS };
 
   /* Launch the kernel */
   cl_event event;
-  err = clEnqueueNDRangeKernel(cmd_queue, kernel, 1, NULL, n_workitem, workgroup_size, 0, NULL, NULL);CHK_ERROR(err);
+  err = clEnqueueNDRangeKernel(cmd_queue, kernel, 1, NULL, global, local, 0, NULL, NULL);CHK_ERROR(err);
 
   /* Transfer C vector back to host */
   err = clEnqueueReadBuffer(cmd_queue, C_dev, CL_TRUE, 0, array_size, C, 0, NULL, NULL);CHK_ERROR(err);
