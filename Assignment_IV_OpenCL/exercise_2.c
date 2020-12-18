@@ -106,10 +106,12 @@ const char *saxpy_arr =
 "__kernel                                   \n"
 "void saxpy    (  __global float *A,         \n"
 "                __global float *B,         \n"
-"                __global float *C)         \n"
+"                __global float *C,         \n"
+"                __global float *const_a)         \n"
+
 "{                                          \n"
 "    int index = get_global_id(0);          \n"
-"    C[index] = A[index] + B[index];        \n"
+"    B[index] = *const_a * A[index] + B[index];        \n"
 "}                                          \n";
 
 
@@ -135,14 +137,19 @@ int main(int argc, char *argv) {
   for ( i = 0; i < VSIZE; i++)
     {A[i] = i; B[i] = VSIZE-i; C[i] = 0; }
 
+  // the constant a
+  float const_a = 10.0;
+
   /* Allocated device data */
   cl_mem A_dev = clCreateBuffer(context, CL_MEM_READ_ONLY, array_size, NULL, &err);CHK_ERROR(err);
   cl_mem B_dev = clCreateBuffer(context, CL_MEM_READ_ONLY, array_size, NULL, &err);CHK_ERROR(err);
   cl_mem C_dev = clCreateBuffer(context, CL_MEM_WRITE_ONLY,array_size, NULL, &err);CHK_ERROR(err);
+  cl_mem const_a_dev = clCreateBuffer(context, CL_MEM_WRITE_ONLY,sizeof(float), NULL, &err);CHK_ERROR(err);
 
   /* Send command to transfer host data to device */
   err = clEnqueueWriteBuffer(cmd_queue, A_dev, CL_TRUE, 0, array_size, A, 0, NULL, NULL);CHK_ERROR(err);
   err = clEnqueueWriteBuffer(cmd_queue, B_dev, CL_TRUE, 0, array_size, B, 0, NULL, NULL);CHK_ERROR(err);
+  err = clEnqueueWriteBuffer(cmd_queue, const_a_dev, CL_TRUE, 0, sizeof(float), &const_a, 0, NULL, NULL);CHK_ERROR(err);
 
   /* Create the OpenCL program */
   cl_program program = clCreateProgramWithSource(context, 1,(const char **)&saxpy_arr, NULL, &err);CHK_ERROR(err);
@@ -162,6 +169,7 @@ int main(int argc, char *argv) {
   err = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *) &A_dev);CHK_ERROR(err);
   err = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *) &B_dev);CHK_ERROR(err);
   err = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *) &C_dev);CHK_ERROR(err);
+  err = clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *) &const_a_dev);CHK_ERROR(err);
 
   /* VSIZE work-items and one work-group */
   // thread block size of 256 threads
@@ -177,7 +185,7 @@ int main(int argc, char *argv) {
   err = clEnqueueNDRangeKernel(cmd_queue, kernel, 1, NULL, global, local, 0, NULL, NULL);CHK_ERROR(err);
 
   /* Transfer C vector back to host */
-  err = clEnqueueReadBuffer(cmd_queue, C_dev, CL_TRUE, 0, array_size, C, 0, NULL, NULL);CHK_ERROR(err);
+  err = clEnqueueReadBuffer(cmd_queue, B_dev, CL_TRUE, 0, array_size, C, 0, NULL, NULL);CHK_ERROR(err);
 
   /* Wait and make sure everything finishes */
   err = clFlush(cmd_queue);CHK_ERROR(err);
@@ -185,8 +193,8 @@ int main(int argc, char *argv) {
 
   /* Check that result is correct */
   for ( i = 0; i < VSIZE; i++)
-    if (C[i] != A[i]+B[i])
-      fprintf(stderr,"Error at %d (%f /= %f)\n", i,C[i],A[i]+B[i]);
+    if (C[i] != const_a * A[i]+B[i])
+      fprintf(stderr,"Error at %d (%f /= %f)\n", i,C[i],const_a * A[i]+B[i]);
 
   fprintf(stderr,"Program executed correctly...\n");
 
