@@ -60,13 +60,19 @@ int main(int argc, char *argv) {
 
   /* VSIZE work-items and one work-group */
   size_t n_workitem[2];
+  // work_item is 16x16
   n_workitem[0] = 16;
   n_workitem[1] = 16;
-  size_t workgroup_size[1] = {1};
+
+  // create workgroup(0,0)
+  size_t workgroup_size[2];
+  workgroup_size[0] = 1;
+  workgroup_size[1] = 1;
+
 
   /* Launch the kernel */
   cl_event event;
-  err = clEnqueueNDRangeKernel(cmd_queue, kernel, 1, NULL, n_workitem, workgroup_size, 0, NULL, NULL);CHK_ERROR(err);
+  err = clEnqueueNDRangeKernel(cmd_queue, kernel, 2, NULL, n_workitem, workgroup_size, 0, NULL, NULL);CHK_ERROR(err);
 
   /* Insert your own code here */
 
