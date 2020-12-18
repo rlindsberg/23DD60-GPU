@@ -17,8 +17,9 @@ const char *hello_world =
 "__kernel                                   \n"
 "void hello()                               \n"
 "{                                          \n"
-"    int index = get_global_id(0);          \n"
-"    printf(\"Hello World! My threadId is %d\\n\", index);        \n"
+"    int x = get_global_id(0);          \n"
+"    int y = get_global_id(1);          \n"
+"    printf(\"Hello World! My threadId is (%d, %d)\\n\", x, y);        \n"
 "}                                          \n";
 
 int main(int argc, char *argv) {
@@ -58,7 +59,8 @@ int main(int argc, char *argv) {
   cl_kernel kernel = clCreateKernel(program, "hello", &err);CHK_ERROR(err);
 
   /* VSIZE work-items and one work-group */
-  size_t n_workitem[1] = {256};
+  size_t n_workitem[0] = {16};
+  size_t n_workitem[1] = {16};
   size_t workgroup_size[1] = {1};
 
   /* Launch the kernel */
