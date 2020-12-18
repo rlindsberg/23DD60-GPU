@@ -10,3 +10,8 @@ kinit --forwardable ruliu@NADA.KTH.SE
 
 ssh -o GSSAPIDelegateCredentials=yes -o GSSAPIKeyExchange=yes \
     -o GSSAPIAuthentication=yes ruliu@tegner.pdc.kth.se
+
+
+module load cuda
+gcc ex.c -L/pdc/vol/cuda/cuda-9.1/lib64/ -lOpenCL -o aex
+srun -n 1 aex
