@@ -59,8 +59,9 @@ int main(int argc, char *argv) {
   cl_kernel kernel = clCreateKernel(program, "hello", &err);CHK_ERROR(err);
 
   /* VSIZE work-items and one work-group */
-  size_t n_workitem[0] = {16};
-  size_t n_workitem[1] = {16};
+  size_t n_workitem[2];
+  n_workitem[0] = 16;
+  n_workitem[1] = 16;
   size_t workgroup_size[1] = {1};
 
   /* Launch the kernel */
