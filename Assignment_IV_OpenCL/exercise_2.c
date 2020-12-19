@@ -192,11 +192,16 @@ int main(int argc, char *argv) {
   err = clFinish(cmd_queue);CHK_ERROR(err);
 
   /* Check that result is correct */
+  fprintf(stderr,"Comparing the output for each implementation… ");
+  int true_res = 1;
   for ( i = 0; i < VSIZE; i++)
-    if (C[i] != const_a * A[i]+B[i])
+    if (C[i] != const_a * A[i]+B[i]){
       fprintf(stderr,"Error at %d (%f /= %f)\n", i,C[i],const_a * A[i]+B[i]);
-
-  fprintf(stderr,"Program executed correctly...\n");
+      true_res = 0;
+    }
+  if (true_res) {
+    fprintf(stderr,"Correct!\n");
+  }
 
   /* Finally, release all that we have allocated. */
   err = clReleaseKernel(kernel);CHK_ERROR(err);
