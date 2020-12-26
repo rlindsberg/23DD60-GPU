@@ -70,7 +70,7 @@ __host__ __device__ void printParticle(Particle* par) {
 
 __global__ void kernel(Particle* par, int iteration)
 {
-   
+
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= N) {
         return;
@@ -80,7 +80,7 @@ __global__ void kernel(Particle* par, int iteration)
         par[i].pos.x += par[i].vel.x;
         par[i].pos.y += par[i].vel.y;
         par[i].pos.z += par[i].vel.z;
-     
+
         par[i].vel.x = randomVelocity(i, iteration);
         par[i].vel.y = randomVelocity(i, iteration);
         par[i].vel.z = randomVelocity(i, iteration);
@@ -100,14 +100,14 @@ int main()
     // CPU init
     Particle* h_par = (Particle*)malloc(N * sizeof(Particle));
     randomParticle(h_par);
-   
+
     // CPU implementation
     clock_t begin = clock();
     h_updateParticle(h_par);
     clock_t end = clock();
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
     printf("CPU run time:%f N: %d Iter: %d TPB: %d\n", time_spent, N, ITERATION, TPB);
-   
+
     // GPU init
     Particle* d_par = 0;
     Particle* d_res = (Particle*)malloc(N * sizeof(Particle));
@@ -116,9 +116,9 @@ int main()
     cudaMemcpy(d_par, h_par, N * sizeof(Particle), cudaMemcpyHostToDevice);
 
     // GPU implementation
-   
+
     g_updateParticle(d_par);
-   
+
     cudaMemcpy(d_res, d_par, N * sizeof(Particle), cudaMemcpyDeviceToHost);
     end = clock();
     time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
@@ -128,7 +128,7 @@ int main()
 
     bool result = compare(h_par, d_res);
     printf("Same answer? %s\n", result ? "true" : "false");
-   
+
     free(h_par);
     free(d_res);
     cudaFree(d_par);
@@ -138,7 +138,7 @@ int main()
     clock_t end = clock();
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
     */
-   
+
 
     return 0;
 }
