@@ -75,7 +75,7 @@ __global__ void kernel(Particle* par, int iteration)
     if (i >= N) {
         return;
     }
-    else
+    else {
         //printf("adding %f and %f resulting in %f\n", par[i].pos.x, par[i].vel.x, par[i].pos.x += par[i].vel.x);
         par[i].pos.x += par[i].vel.x;
         par[i].pos.y += par[i].vel.y;
@@ -85,6 +85,7 @@ __global__ void kernel(Particle* par, int iteration)
         par[i].vel.y = randomVelocity(i, iteration);
         par[i].vel.z = randomVelocity(i, iteration);
         //printf("GPU pos:%f vel:%f Idx:%d ITER:%d \n", par[i].pos.x, par[i].vel.x, i, iteration);
+    }
 }
 
 void g_updateParticle(Particle* par) {
