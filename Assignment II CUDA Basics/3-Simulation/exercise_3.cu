@@ -103,12 +103,12 @@ int main()
     randomParticle(h_par);
 
 
-
+    // Use nvprof to calculate GPU time!
     // GPU init
     Particle* d_par = 0;
     Particle* d_res = (Particle*)malloc(N * sizeof(Particle));
     cudaMalloc(&d_par, N * sizeof(Particle));
-    clock_t begin = clock();
+
     cudaMemcpy(d_par, h_par, N * sizeof(Particle), cudaMemcpyHostToDevice);
 
     // GPU implementation
@@ -116,18 +116,31 @@ int main()
     g_updateParticle(d_par);
 
     cudaMemcpy(d_res, d_par, N * sizeof(Particle), cudaMemcpyDeviceToHost);
-    clock_t end = clock();
-    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-    printf("GPU run time:%f N: %d Iter: %d TPB: %d\n", time_spent, N, ITERATION, TPB);
+
+
+    // https://stackoverflow.com/questions/36095323/what-is-the-difference-between-chrono-and-ctime
+    // ctime is a C-style header, it's old, not type safe and not as accurate as
+    // chrono. chrono is the preferred option in C++; it's a contemporary C++
+    // header, it's type safe, as accurate as our hardware allows, it has extended
+    // functionality, and, more importantly, it follows C++ (rather than C) logic
+    // so that certain things will be more natural/expressive with it and so that
+    // we may expect it to be aware of many contemporary language
+    // features (threads, exceptions, etc) - we cannot make the same assumptions
+    // for ctime.
+    //
+    // That said, there are still several use-cases for ctime (or even time.h),
+    // e.g. when we need to talk with some C API or when we rely on old code-bases
+    // or when we use some library which follows a different kind of logic. C++ is
+    // designed to be pragmatic and not to be "pure" in any respect; this is why
+    // ctime and all sorts of antiquated headers, syntaxes and language features
+    // are still there even if programers are discouraged from using them.
 
     // CPU implementation
-    begin = clock();
+    clock_t begin = clock();
     h_updateParticle(h_par);
-    end = clock();
-    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
     printf("CPU run time:%f N: %d Iter: %d TPB: %d\n", time_spent, N, ITERATION, TPB);
-
-
     // Compare results
 
     bool result = compare(h_par, d_res);
