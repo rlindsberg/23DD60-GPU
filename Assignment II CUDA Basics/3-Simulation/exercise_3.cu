@@ -102,18 +102,13 @@ int main()
     Particle* h_par = (Particle*)malloc(N * sizeof(Particle));
     randomParticle(h_par);
 
-    // CPU implementation
-    clock_t begin = clock();
-    h_updateParticle(h_par);
-    clock_t end = clock();
-    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-    printf("CPU run time:%f N: %d Iter: %d TPB: %d\n", time_spent, N, ITERATION, TPB);
+
 
     // GPU init
     Particle* d_par = 0;
     Particle* d_res = (Particle*)malloc(N * sizeof(Particle));
     cudaMalloc(&d_par, N * sizeof(Particle));
-    begin = clock();
+    clock_t begin = clock();
     cudaMemcpy(d_par, h_par, N * sizeof(Particle), cudaMemcpyHostToDevice);
 
     // GPU implementation
@@ -121,9 +116,17 @@ int main()
     g_updateParticle(d_par);
 
     cudaMemcpy(d_res, d_par, N * sizeof(Particle), cudaMemcpyDeviceToHost);
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("GPU run time:%f N: %d Iter: %d TPB: %d\n", time_spent, N, ITERATION, TPB);
+
+    // CPU implementation
+    begin = clock();
+    h_updateParticle(h_par);
     end = clock();
     time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-    printf("GPU run time:%f N: %d Iter: %d TPB: %d\n", time_spent, N, ITERATION, TPB);
+    printf("CPU run time:%f N: %d Iter: %d TPB: %d\n", time_spent, N, ITERATION, TPB);
+
 
     // Compare results
 
