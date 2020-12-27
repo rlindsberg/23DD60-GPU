@@ -1,3 +1,7 @@
+// Author Wen Yi and Roderick Karlemstrand
+// Created on 13 Nov 2020
+// Modified on 27 Dec 2020
+
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <math.h>
@@ -8,7 +12,7 @@
 #define TPB 16
 #define N 2000
 #define ITERATION 10000
-#define PRIME_NUMBER 97
+#define PRIME_NUMBER 101
 #define ERROR 1e-6
 
 // Particle object
@@ -19,8 +23,8 @@ struct Particle{
 
 __host__ bool compare(Particle* par1, Particle* par2) {
     for (int i = 0; i < N; i++) {
-        bool a = fabs(par1[i].pos.x - par2[i].pos.x) < ERROR;
-        //printf("comapre %f %f %d\n", par1[i].pos.x, par2[i].pos.x,a);
+        // bool a = fabs(par1[i].pos.x - par2[i].pos.x) < ERROR;
+        //printf("comapre %f %f %d\n", par1[i].pos.x, par2[i].pos.x, a);
         if (fabs(par1[i].pos.x - par2[i].pos.x) > ERROR || fabs(par1[i].pos.y - par2[i].pos.y) > ERROR || fabs(par1[i].pos.z - par2[i].pos.z) > ERROR) {
             return false;
         }
@@ -43,8 +47,9 @@ void randomParticle(Particle* par) {
 }
 
 __host__ __device__ float randomVelocity(int i, int j) {
-    //return (float)((i * j) % PRIME_NUMBER) / (float)PRIME_NUMBER;
-    return 1.0;
+    // Uniformly select vel 0 and 100
+    return (float)((i * j) % PRIME_NUMBER) / (float)PRIME_NUMBER;
+    // return 1.0;
 }
 
 void h_updateParticle(Particle* par) {
