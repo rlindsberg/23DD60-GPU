@@ -174,6 +174,15 @@ void cpu_grayscale(int width, int height, float *image, float *image_out)
 /**
  * Converts a given 24bpp image into 8bpp grayscale using the GPU.
  */
+
+ // #define BLOCK_SIZE  16
+ // #define HEADER_SIZE 138
+ // #define BLOCK_SIZE_SH 18
+ // HK
+ // Image opened (width=4608 height=2880).
+ // gridDim 288, 180
+ // blockDim 16, 16
+
 __global__ void gpu_grayscale(int width, int height, float *image, float *image_out)
 {
     ////////////////
@@ -264,6 +273,15 @@ void cpu_gaussian(int width, int height, float *image, float *image_out)
 /**
  * Applies a Gaussian 3x3 filter to a given image using the GPU.
  */
+
+ // #define BLOCK_SIZE  16
+ // #define HEADER_SIZE 138
+ // #define BLOCK_SIZE_SH 18
+ // HK
+ // Image opened (width=4608 height=2880).
+ // gridDim 288, 180
+ // blockDim 16, 16
+
 __global__ void gpu_gaussian(int width, int height, float *image, float *image_out)
 {
     __shared__ float sh_block[BLOCK_SIZE_SH * BLOCK_SIZE_SH];
@@ -482,4 +500,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
