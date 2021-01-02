@@ -293,6 +293,9 @@ __global__ void gpu_gaussian(int width, int height, float *image, float *image_o
     int index_x = blockIdx.x * blockDim.x + threadIdx.x;
     int index_y = blockIdx.y * blockDim.y + threadIdx.y;
 
+    // use sh_id to index the shared memory
+    int sh_id = threadIdx.y * BLOCK_SIZE_SH + threadIdx.x;
+
     // use sh_image_pixel_index to index 17x17 memory (with padding 1)
     int sh_image_pixel_index = 1 + threadIdx.x + (1 + threadIdx.y) * BLOCK_SIZE_SH;
     int image_pixel_index = index_x + index_y * width;
@@ -307,24 +310,33 @@ __global__ void gpu_gaussian(int width, int height, float *image, float *image_o
         if (threadIdx.y == 0) {
             sh_block[sh_image_pixel_index - BLOCK_SIZE_SH - 1] = image[image_pixel_index - width - 1];
         }
+        // 18 - 3 = 15
     } else if (threadIdx.x == BLOCK_SIZE_SH - 3) {
         sh_block[sh_image_pixel_index + 1] = image[image_pixel_index + 1];
         // bottom-right
-        if (threadIdx.y == 0) {
+        if (threadIdx.y == BLOCK_SIZE_SH - 3) {
             sh_block[sh_image_pixel_index + BLOCK_SIZE_SH + 1] = image[image_pixel_index + width + 1];
+        }
+    } else if (threadIdx.y == 0) {
+        sh_block[sh_image_pixel_index - BLOCK_SIZE_SH] = image[image_pixel_index - width];
+        if (threadIdx.x == BLOCK_SIZE_SH - 3) {
+            sh_block[sh_image_pixel_index - BLOCK_SIZE_SH + 1] = image[image_pixel_index - width + 1];
+        }
+    } else if (threadIdx.y == BLOCK_SIZE_SH - 3) {
+        sh_block[sh_image_pixel_index + BLOCK_SIZE_SH] = image[image_pixel_index + width];
+        if (threadIdx.x == 0) {
+            sh_block[sh_image_pixel_index + BLOCK_SIZE_SH - 1] = image[image_pixel_index + width - 1];
         }
     }
 
     __syncthreads();
-
 
     if (index_x < (width - 2) && index_y < (height - 2))
     {
         int offset = (index_y + 1) * width + (index_x + 1);
         // int offset_t = sh_image_pixel_index - BLOCK_SIZE_SH - 1;
 
-        image_out[offset] = gpu_applyFilter(&sh_block[sh_image_pixel_index],
-                                        BLOCK_SIZE_SH, gaussian, 3);
+        image_out[offset] = gpu_applyFilter(&sh_block[sh_id], BLOCK_SIZE_SH, gaussian, 3);
     }
 }
 
@@ -377,6 +389,44 @@ __global__ void gpu_sobel(int width, int height, float *image, float *image_out)
 
     int index_x = blockIdx.x * blockDim.x + threadIdx.x;
     int index_y = blockIdx.y * blockDim.y + threadIdx.y;
+
+    // use sh_id to index the shared memory
+    int sh_id = threadIdx.y * BLOCK_SIZE_SH + threadIdx.x;
+
+    // use sh_image_pixel_index to index 17x17 memory (with padding 1)
+    int sh_image_pixel_index = 1 + threadIdx.x + (1 + threadIdx.y) * BLOCK_SIZE_SH;
+    int image_pixel_index = index_x + index_y * width;
+
+    // fill the center of the sh_block
+    sh_block[sh_image_pixel_index] = image[image_pixel_index];
+
+    // fill the boarder of the sh_block
+    if (threadIdx.x == 0) {
+        sh_block[sh_image_pixel_index - 1] = image[image_pixel_index - 1];
+        // top-left
+        if (threadIdx.y == 0) {
+            sh_block[sh_image_pixel_index - BLOCK_SIZE_SH - 1] = image[image_pixel_index - width - 1];
+        }
+        // 18 - 3 = 15
+    } else if (threadIdx.x == BLOCK_SIZE_SH - 3) {
+        sh_block[sh_image_pixel_index + 1] = image[image_pixel_index + 1];
+        // bottom-right
+        if (threadIdx.y == BLOCK_SIZE_SH - 3) {
+            sh_block[sh_image_pixel_index + BLOCK_SIZE_SH + 1] = image[image_pixel_index + width + 1];
+        }
+    } else if (threadIdx.y == 0) {
+        sh_block[sh_image_pixel_index - BLOCK_SIZE_SH] = image[image_pixel_index - width];
+        if (threadIdx.x == BLOCK_SIZE_SH - 3) {
+            sh_block[sh_image_pixel_index - BLOCK_SIZE_SH + 1] = image[image_pixel_index - width + 1];
+        }
+    } else if (threadIdx.y == BLOCK_SIZE_SH - 3) {
+        sh_block[sh_image_pixel_index + BLOCK_SIZE_SH] = image[image_pixel_index + width];
+        if (threadIdx.x == 0) {
+            sh_block[sh_image_pixel_index + BLOCK_SIZE_SH - 1] = image[image_pixel_index + width - 1];
+        }
+    }
+
+    __syncthreads();
 
     if (index_x < (width - 2) && index_y < (height - 2))
     {
