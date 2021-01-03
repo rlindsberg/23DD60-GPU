@@ -8,8 +8,7 @@
 
 #define TPB 128
 #define N 100000000
-#define ITERATION 1
-#define N_STREAMS 4
+#define ITERATION 10
 #define PRIME_NUMBER 97
 #define ERROR 1e-5
 
@@ -68,10 +67,10 @@ __host__ __device__ void printParticle(Particle* par) {
     }
 }
 
-__global__ void kernel(Particle* par, int offset)
+__global__ void kernel(Particle* par, int iteration)
 {
     
-    const int i = blockIdx.x * blockDim.x + threadIdx.x + offset;
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= N) {
         return;
     }
@@ -81,9 +80,9 @@ __global__ void kernel(Particle* par, int offset)
         par[i].pos.y += par[i].vel.y;
         par[i].pos.z += par[i].vel.z;
         //printf("GPU pos:%f vel:%f Idx:%d ITER:%d \n", par[i].pos.x, par[i].vel.x, i, iteration);
-        par[i].vel.x = randomVelocity(i, 1);
-        par[i].vel.y = randomVelocity(i, 1);
-        par[i].vel.z = randomVelocity(i, 1);
+        par[i].vel.x = randomVelocity(i, iteration);
+        par[i].vel.y = randomVelocity(i, iteration);
+        par[i].vel.z = randomVelocity(i, iteration);
         
 }
 
@@ -91,73 +90,30 @@ void checkCudaError() {
     cudaError_t error = cudaGetLastError();
     if (error != cudaSuccess) {
         printf("CUDA error: %s\n", cudaGetErrorString(error));
-        //exit(-1);
+        exit(-1);
     }
 }
 
-void g_updateParticle(Particle* d_par, Particle* h_par, cudaStream_t* stream, int streamBytes) {
+
+void g_updateParticle(Particle* par) {
     for (int j = 0; j < ITERATION; j++) {
 
+        kernel <<<((N + TPB - 1) / TPB), TPB >>> (par, j);
+        cudaDeviceSynchronize();
+        checkCudaError();
     }
 }
+
 
 int main()
 {
+    Particle* par;
+    cudaMallocManaged(&par, N * sizeof(Particle));
+    randomParticle(par);
 
-    // Allocating pinned memory
-    Particle* h_par = 0;
-    cudaHostAlloc(&h_par, N * sizeof(Particle), cudaHostAllocDefault);
-    // Initialization
-    randomParticle(h_par);
-
-    // Allocating GPU memory
-    Particle* d_par = 0;
-    cudaMalloc(&d_par, N * sizeof(Particle));
-
-    // Stream initialization
-    const int streamSize = N / N_STREAMS;
-    const size_t streamBytes = (size_t) streamSize * sizeof(Particle);
-
-    cudaStream_t stream[N_STREAMS];
-
-    for (int i = 0; i < N_STREAMS;++i) {
-        cudaStreamCreate(&stream[i]);
-    }
-
-    // Concurrency
-    /*
-    for (int i = 0; i < N_STREAMS;++i) {
-        int offset = i * streamSize;
-        printf("offset: %d\n", offset);
-        cudaMemcpyAsync(&d_par[offset], &h_par[offset], streamBytes, cudaMemcpyHostToDevice, stream[i]);
-        kernel << <streamSize / TPB, TPB, 0, stream[i] >> > (d_par, 1);
-        cudaMemcpyAsync(&h_par[offset], &d_par[offset], streamBytes, cudaMemcpyDeviceToHost, stream[i]);
-    }
-    */
-
-    // Concurrency 2
-    for (int i = 0; i < N_STREAMS;++i) {
-        int offset = i * streamSize;
-        cudaMemcpyAsync(&d_par[offset], &h_par[offset], streamBytes, cudaMemcpyHostToDevice, stream[i]);
-    }
-    for (int i = 0; i < N_STREAMS;++i) {
-        int offset = i * streamSize;
-        kernel << <streamSize / TPB, TPB, 0, stream[i] >> > (d_par, offset);
-    }
-    for (int i = 0; i < N_STREAMS;++i) {
-        int offset = i * streamSize;
-        cudaMemcpyAsync(&h_par[offset], &d_par[offset], streamBytes, cudaMemcpyDeviceToHost, stream[i]);
-    }
-    // Cleanup
-    for (int i = 0; i < N_STREAMS;++i) {
-        cudaStreamSynchronize(stream[i]);
-        checkCudaError();
-        cudaStreamDestroy(stream[i]);
-    }
-
-    cudaFreeHost(h_par);
-    cudaFree(d_par);
-   
+    g_updateParticle(par);
+    
+    cudaFree(par);
 
     return 0;
 }
