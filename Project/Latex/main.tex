@@ -211,6 +211,9 @@ A comparison between CPU and GPU was also made. The CPU environment was provided
   \label{fig:colab}
 \end{figure}
 
+As the classification neural network does not have something remarkable, it may be a good direction in future work. For example, adding dropout layers, experimenting different combinations of neurons in each hidden layer, the number of hidden layers, the activation function in each hidden layer may result in much better prediction accuracy on the test data set. It is also a common practice to add some regularisations into the hidden layers. It can be applied to the kernel, the bias or the output. There are also various regularisations, such as weight decay. By fine-tuning the parameters, it would make it possible to reach the full potential of the VAE architecture. 
+
+There is also a limitation from the dataset. As we can see in figure 1, the picture is very blurry and the picture is about a human and a bicycle. This may confuse the machine learning model. Simple models are not resistant to noises or mislabelling in the training set, hence the performance would suffer from that.
 
 \addcontentsline{toc}{chapter}{References}
 \printbibliography[title={References}]
