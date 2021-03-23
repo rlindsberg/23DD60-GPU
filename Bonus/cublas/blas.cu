@@ -185,7 +185,12 @@ void cublas_sgemm(float *C, float *A, float *B, long size)
 
     gettimeofday(&t0, NULL);
     /* TODO fill in the blanks, do C = BA instead of C = AB */
-    cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, , , , , , , , , , , );
+    // skcuda.cublas.cublasSgemm(handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)[source]
+    long lda = size;
+    long ldb = size;
+    long ldc = size;
+    cublasSgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N, lda, ldb, size,
+                &alpha, B, size, A, size, &beta, C, ldc);
     checkCudaErrors(cudaDeviceSynchronize());
     gettimeofday(&t1, NULL);
     cublasDestroy(handle);
