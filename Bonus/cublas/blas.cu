@@ -133,6 +133,8 @@ void shared_sgemm_kernel(float *C, float *A, float *B, long size)
     float val = 0.0;
 
     /* TODO declare shared memory with size TILE_SIZE x TILE_SIZE */
+    __shared__ float tile_A[TILE_SIZE][TILE_SIZE];
+    __shared__ float tile_B[TILE_SIZE][TILE_SIZE];
 
     if (col < size && row < size) {
         const long local_col = blockIdx.x * TILE_SIZE + threadIdx.x;
@@ -146,6 +148,8 @@ void shared_sgemm_kernel(float *C, float *A, float *B, long size)
             /* TODO introduce a pragma directive that can potentially improve performance here */
             for (long k = 0; k < TILE_SIZE; ++k) {
                 /* TODO Perform multiplication here */
+                // pp.12, https://www.cs.utexas.edu/users/rvdg/LinAlgBook/Section2-5.pdf
+                val += tile_A[threadIdx.y][k] * tile_B[k][threadIdx.x];
             }
             __syncthreads();
         }
