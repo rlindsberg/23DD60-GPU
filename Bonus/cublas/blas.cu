@@ -146,6 +146,8 @@ void shared_sgemm_kernel(float *C, float *A, float *B, long size)
             __syncthreads();
 
             /* TODO introduce a pragma directive that can potentially improve performance here */
+            // When compiling with -O3 -Otime, the compiler automatically unrolls loops where it is beneficial to do so.
+            /* #pragma unroll */
             for (long k = 0; k < TILE_SIZE; ++k) {
                 /* TODO Perform multiplication here */
                 // pp.12, https://www.cs.utexas.edu/users/rvdg/LinAlgBook/Section2-5.pdf
