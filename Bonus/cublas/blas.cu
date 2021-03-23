@@ -189,7 +189,7 @@ void cublas_sgemm(float *C, float *A, float *B, long size)
     long lda = size;
     long ldb = size;
     long ldc = size;
-    cublasSgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N, lda, ldb, size,
+    cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, lda, ldb, size,
                 &alpha, B, size, A, size, &beta, C, ldc);
     checkCudaErrors(cudaDeviceSynchronize());
     gettimeofday(&t1, NULL);
