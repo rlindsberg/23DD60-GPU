@@ -6,7 +6,7 @@
 #include <chrono>
 #define N 256
 #define TPB 256
-#define TRIALS_PER_THREAD 100
+#define TRIALS_PER_THREAD 12800
 
 
 __global__ void gpu_random(curandState *states, float *device_pi_estimates) {
@@ -15,7 +15,7 @@ __global__ void gpu_random(curandState *states, float *device_pi_estimates) {
 	float x, y, z;
 	int p_in_circle = 0;
 
-	curand_init(seed, id, 0, &states[id]);  // 	Initialize CURAND 
+	curand_init(seed, id, 0, &states[id]);  // 	Initialize CURAND          
 
 	for(int i = 0; i < TRIALS_PER_THREAD; i++) {
 		x = curand_uniform (&states[id]);
