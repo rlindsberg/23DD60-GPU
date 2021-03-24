@@ -1,0 +1,29 @@
+matrix_size,device_n_lib,time
+64,CPU matmul,0.054000
+64,GPU cuBLAS,0.065000
+64,GPU global memory,0.091000
+64,GPU shared memory,0.025000
+128,CPU matmul,0.409000
+128,GPU cuBLAS,0.068000
+128,GPU global memory,0.354000
+128,GPU shared memory,0.051000
+256,CPU matmul,3.619000
+256,GPU cuBLAS,0.099000
+256,GPU global memory,2.843000
+256,GPU shared memory,0.200000
+512,CPU matmul,26.724000
+512,GPU cuBLAS,0.294000
+512,GPU global memory,20.707000
+512,GPU shared memory,1.405000
+1024,CPU matmul,209.589000
+1024,GPU cuBLAS,1.307000
+1024,GPU global memory,162.026000
+1024,GPU shared memory,11.460000
+2048,CPU matmul,1649
+2048,GPU cuBLAS,9
+2048,GPU global memory,1012
+2048,GPU shared memory,59
+4096,CPU matmul,30095
+4096,GPU cuBLAS,62
+4096,GPU global memory,6865
+4096,GPU shared memory,473
